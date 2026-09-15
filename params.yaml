@@ -1,0 +1,22 @@
+data:
+  test_size: 0.20
+  random_state: 42
+  exclude_duration: true
+
+training:
+  models:
+    - logistic-regression
+    - random-forest
+    - hist-gradient-boosting
+  threshold_min: 0.10
+  threshold_max: 0.90
+  threshold_step: 0.01
+
+gates:
+  minimum_roc_auc: 0.70
+  minimum_pr_auc: 0.25
+  maximum_ece: 0.10
+
+monitoring:
+  psi_warning: 0.10
+  psi_critical: 0.25

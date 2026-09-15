@@ -1,77 +1,249 @@
-# Bank_Marketing_Campaigns
-# Portugal Bank Marketing Campaigns
+# BankPulse — Enterprise-Style Marketing Propensity MLOps
 
-## Abstract
+BankPulse transforms the original bank-marketing classification exercise into a production-oriented machine-learning platform for campaign propensity scoring.
 
-This project analyzes the results of bank marketing campaigns conducted by a Portuguese bank. The campaigns were mainly based on direct phone calls, where the bank offered its clients the opportunity to place a term deposit. The dataset captures various attributes such as age, job type, marital status, etc., and the outcome (yes/no) indicating whether the client subscribed to a term deposit.
+> **Portfolio scope:** this repository demonstrates ML engineering and MLOps patterns. It is not a production banking decision engine and does not claim regulatory approval or live financial performance.
 
-## Tasks
+## Architecture
 
-- **Classification**: Predict the future results of marketing campaigns based on available statistics and formulate recommendations for future campaigns.
-- **Consumer Profiling**: Build a profile of a typical consumer for the bank's services, particularly term deposits.
-- **Clustering**: Use KNN clustering to create imaginary boundaries for data classification.
+```text
+                         ┌──────────────────────┐
+                         │ Versioned Bank Data  │
+                         │ CSV / DVC            │
+                         └──────────┬───────────┘
+                                    │
+                                    v
+                         ┌──────────────────────┐
+                         │ Data Contract        │
+                         │ Schema + Validation  │
+                         └──────────┬───────────┘
+                                    │
+                                    v
+                         ┌──────────────────────┐
+                         │ Feature Pipeline     │
+                         │ Imputation + OHE     │
+                         │ Leakage Controls     │
+                         └──────────┬───────────┘
+                                    │
+                     ┌──────────────┴──────────────┐
+                     v                             v
+              Logistic Regression          Random Forest / HGB
+                     │                             │
+                     └──────────────┬──────────────┘
+                                    v
+                         ┌──────────────────────┐
+                         │ Evaluation Gate      │
+                         │ ROC-AUC / PR-AUC     │
+                         │ F1 / Recall / ECE    │
+                         └──────────┬───────────┘
+                                    │
+                                    v
+                         ┌──────────────────────┐
+                         │ MLflow               │
+                         │ Experiments          │
+                         │ Model Registry       │
+                         └──────────┬───────────┘
+                                    │
+                    ┌───────────────┴────────────────┐
+                    v                                v
+             Batch Scoring                       FastAPI
+             Parquet Output                      Online API
+                    │                                │
+                    └───────────────┬────────────────┘
+                                    v
+                         ┌──────────────────────┐
+                         │ Observability        │
+                         │ Prometheus + Alerts  │
+                         │ Drift + Calibration  │
+                         └──────────┬───────────┘
+                                    │
+                                    v
+                         ┌──────────────────────┐
+                         │ Airflow Retraining   │
+                         │ Scheduled Pipeline   │
+                         └──────────────────────┘
 
-## Features Description
+              Docker → Kubernetes → HPA
+              GitHub Actions → CI → Artifacts
+```
 
-### Bank Client Data
-- **Age**: Numeric
-- **Job**: Type of job (admin, blue-collar, entrepreneur, etc.)
-- **Marital Status**: (divorced, married, single, unknown)
-- **Education**: Level of education (basic, high school, professional course, etc.)
-- **Default**: Has credit in default? (yes, no, unknown)
-- **Housing**: Has housing loan? (yes, no, unknown)
-- **Loan**: Has personal loan? (yes, no, unknown)
+## Engineering capabilities
 
-### Last Contact Data
-- **Contact**: Type of communication (cellular, telephone)
-- **Month**: Last contact month
-- **Day of Week**: Last contact day of the week
-- **Duration**: Last contact duration in seconds
+### Data engineering
+- Explicit feature contract
+- Dataset validation before training
+- DVC pipeline definition
+- Versioned training parameters
+- Offline feature-store abstraction using Parquet
+- Deterministic train/test split
 
-### Other Attributes
-- **Campaign**: Number of contacts during this campaign
-- **PDays**: Number of days passed since the client was last contacted from a previous campaign
-- **Previous**: Number of contacts before this campaign
-- **POutcome**: Outcome of the previous marketing campaign
+### Machine learning
+- Logistic Regression baseline
+- Random Forest
+- Histogram Gradient Boosting
+- Class imbalance handling
+- Pipeline-based preprocessing
+- Leakage-aware feature selection
+- Automated champion selection
+- Optimised decision threshold
+- ROC-AUC, PR-AUC, precision, recall and F1
+- Probability calibration / ECE utility
+- Permutation-based explainability
+- Cost-aware campaign policy and top-cohort lift analysis
 
-### Social and Economic Context Attributes
-- **Employment Variation Rate**: Quarterly indicator
-- **Consumer Price Index**: Monthly indicator
-- **Consumer Confidence Index**: Monthly indicator
-- **Euribor 3-Month Rate**: Daily indicator
-- **Number of Employees**: Quarterly indicator
+### MLOps
+- MLflow experiment tracking
+- MLflow model registration
+- Model manifest
+- SHA-256 artifact integrity
+- Candidate/promotion gate
+- Reproducible `params.yaml`
+- DVC stages
+- Airflow scheduled retraining
+- CI quality gates
+- CI training workflow with downloadable model artifacts
 
-### Target Variable
-- **Y**: Has the client subscribed to a term deposit? (yes, no)
+### Production serving
+- FastAPI inference gateway
+- Strict Pydantic request contracts
+- `/health`
+- `/ready`
+- `/v1/predict`
+- `/metrics`
+- Configurable model version and decision threshold
+- Lazy model loading
+- Prometheus request/error/latency metrics
+- Docker runtime
+- Kubernetes Deployment + Service
+- Kubernetes HPA
+- Readiness/liveness probes
+- Resource requests/limits
+- Read-only filesystem / privilege restrictions
 
-## Source Code
+### Monitoring
+- Request rate
+- Error rate
+- Latency histograms
+- Prediction-rate monitoring
+- Population Stability Index drift
+- Calibration error
+- Prometheus alert rules
 
-The analysis is conducted using Python, leveraging libraries such as Pandas, NumPy, Matplotlib, and scikit-learn. The complete code can be found in the repository.
+## Important modelling decision
 
-## Results
+The original dataset contains `duration`, the length of the last call. BankPulse excludes it from the production feature contract because it is only known after a contact has taken place. Including it in a pre-contact targeting model would introduce post-event leakage and produce an unrealistic offline evaluation.
 
-The models used for this analysis include Logistic Regression, Random Forest, KNN, Decision Trees, and Bagging Classifiers. The best-performing model is the Random Forest Classifier with an accuracy of approximately 91%.
+## Repository layout
 
-## Insights
-- The most influential features in determining whether a client will subscribe to a term deposit are 'duration of the call', 'age', and 'employment variation rate'.
-- The Random Forest Classifier performed the best among all models, with an accuracy of 91%.
+```text
+src/bankpulse/
+├── api.py             # online inference
+├── batch.py           # offline scoring
+├── business.py        # cost-aware campaign policy
+├── calibration.py     # probability calibration metrics
+├── config.py          # typed settings
+├── data.py            # loading and validation
+├── data_validate.py   # DVC validation stage
+├── drift.py           # PSI drift detection
+├── evaluate.py        # model metrics and threshold search
+├── explain.py         # permutation importance
+├── feature_store.py   # offline feature-store abstraction
+├── features.py        # preprocessing pipeline
+├── model.py           # candidate model factory
+├── monitoring.py      # serving metrics
+├── registry.py        # artifact integrity / promotion gate
+├── schema.py          # API contracts
+└── train.py           # MLflow training pipeline
 
-## Conclusion
+airflow/dags/retrain.py
+k8s/deployment.yaml
+k8s/hpa.yaml
+monitoring/prometheus.yml
+monitoring/alerts.yml
+dvc.yaml
+params.yaml
+MODEL_CARD.md
+Dockerfile
+docker-compose.yml
+Makefile
+```
 
-This analysis provides insights into the effectiveness of bank marketing campaigns and offers recommendations for future campaigns. Further improvement can be achieved by fine-tuning the model and possibly by incorporating more features.
+## Run locally
 
-## Getting Started
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e '.[dev,mlops]'
 
-1. Clone the repository
-2. Install the required packages: `pip install -r requirements.txt`
-3. Run `Bank_Marketing_Campaigns.py` to perform the analysis.
+make lint
+make test
+```
 
-## Acknowledgements
+Train against the repository dataset:
 
-- Dataset Source: [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/bank+marketing)
+```bash
+make train
+```
 
----
+Start the API after a model artifact has been generated:
 
-For more details, please refer to the Jupyter Notebook in the repository.
+```bash
+make serve
+```
 
-Feel free to contribute!
+Run batch scoring:
+
+```bash
+make batch
+```
+
+Start the local MLflow + Prometheus stack:
+
+```bash
+docker compose up --build
+```
+
+## API contract
+
+The prediction endpoint accepts the feature contract and returns:
+
+```json
+{
+  "probability": 0.73,
+  "prediction": 1,
+  "model_version": "bankpulse-2.0.0",
+  "latency_ms": 4.2
+}
+```
+
+## Production lifecycle
+
+```text
+Data change
+   ↓
+DVC / validation
+   ↓
+Training candidates
+   ↓
+MLflow experiment
+   ↓
+Evaluation + calibration
+   ↓
+Promotion gate
+   ↓
+Model registry
+   ↓
+Batch / online deployment
+   ↓
+Prometheus monitoring
+   ↓
+Drift / quality signal
+   ↓
+Scheduled retraining
+```
+
+## Model governance
+
+See [`MODEL_CARD.md`](MODEL_CARD.md) for intended use, limitations, data leakage considerations, evaluation methodology and governance boundaries.
+
+No credentials, cloud keys or secrets are stored in the repository. Cloud deployment can be connected through environment variables or a secret manager without changing the model-serving code.

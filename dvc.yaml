@@ -1,15 +1,15 @@
 stages:
   validate:
-    cmd: python -m bankpulse.data_validate --data data/bank.csv
+    cmd: python -m bankpulse.data_validate --data Portugal-bank_marketing/Dataset/bank/bank.csv
     deps:
-      - data/bank.csv
+      - Portugal-bank_marketing/Dataset/bank/bank.csv
       - src/bankpulse/data.py
     outs:
       - artifacts/validated.marker
   train:
-    cmd: bankpulse-train --data data/bank.csv --output artifacts
+    cmd: bankpulse-train --data Portugal-bank_marketing/Dataset/bank/bank.csv --output artifacts
     deps:
-      - data/bank.csv
+      - Portugal-bank_marketing/Dataset/bank/bank.csv
       - src/bankpulse
       - params.yaml
     params:

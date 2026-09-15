@@ -15,6 +15,11 @@ jobs:
           python-version: "3.11"
       - run: pip install -e '.[dev,mlops]'
       - name: Validate dataset
-        run: python -m bankpulse.data_validate --data data/bank.csv
+        run: python -m bankpulse.data_validate --data Portugal-bank_marketing/Dataset/bank/bank.csv
       - name: Train candidates
-        run: bankpulse-train --data data/bank.csv --output artifacts
+        run: bankpulse-train --data Portugal-bank_marketing/Dataset/bank/bank.csv --output artifacts
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bankpulse-model
+          path: artifacts/

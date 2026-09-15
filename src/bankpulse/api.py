@@ -13,9 +13,12 @@ from .model import load
 from .schema import HealthResponse, PredictionRequest, PredictionResponse
 
 MODEL_PATH = Path(os.getenv("BANKPULSE_MODEL", "artifacts/model.joblib"))
+MODEL_VERSION = os.getenv("BANKPULSE_MODEL_VERSION", "bankpulse-1.0.0")
+DECISION_THRESHOLD = float(os.getenv("BANKPULSE_THRESHOLD", "0.5"))
 REQUESTS = Counter("bankpulse_prediction_requests_total", "Prediction requests")
+ERRORS = Counter("bankpulse_prediction_errors_total", "Prediction errors")
 LATENCY = Histogram("bankpulse_prediction_latency_seconds", "Prediction latency")
-app = FastAPI(title="BankPulse Inference API", version="1.0.0")
+app = FastAPI(title="BankPulse Inference API", version="2.0.0")
 app.mount("/metrics", make_asgi_app())
 _model = None
 
@@ -38,20 +41,24 @@ def health():
 def ready():
     if not MODEL_PATH.exists():
         raise HTTPException(status_code=503, detail="Model not ready")
-    return {"ready": True}
+    return {"ready": True, "model_version": MODEL_VERSION}
 
 
 @app.post("/v1/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
     started = time.perf_counter()
     REQUESTS.inc()
-    frame = pd.DataFrame([request.model_dump()], columns=FEATURES)
-    probability = float(get_model().predict_proba(frame)[0, 1])
-    latency = time.perf_counter() - started
-    LATENCY.observe(latency)
+    try:
+        frame = pd.DataFrame([request.model_dump()], columns=FEATURES)
+        probability = float(get_model().predict_proba(frame)[0, 1])
+    except Exception as exc:
+        ERRORS.inc()
+        raise HTTPException(status_code=500, detail="Inference failed") from exc
+    elapsed = time.perf_counter() - started
+    LATENCY.observe(elapsed)
     return PredictionResponse(
         probability=probability,
-        prediction=int(probability >= 0.5),
-        model_version="bankpulse-1.0.0",
-        latency_ms=latency * 1000,
+        prediction=int(probability >= DECISION_THRESHOLD),
+        model_version=MODEL_VERSION,
+        latency_ms=elapsed * 1000,
     )

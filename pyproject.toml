@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bankpulse-mlops"
+version = "1.0.0"
+description = "End-to-end MLOps platform for bank marketing propensity modelling"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "numpy>=1.26,<3",
+  "pandas>=2.2,<3",
+  "scikit-learn>=1.5,<2",
+  "pydantic>=2.8,<3",
+  "prometheus-client>=0.20,<1",
+  "pyyaml>=6,<7",
+  "joblib>=1.4,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "ruff>=0.8,<1", "httpx>=0.27,<1"]
+mlops = ["mlflow>=2.17,<4", "dvc>=3.50,<4"]
+
+[project.scripts]
+bankpulse-train = "bankpulse.train:main"
+bankpulse-batch = "bankpulse.batch:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

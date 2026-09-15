@@ -27,5 +27,8 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
 def validate(frame: pd.DataFrame) -> None:
     if frame.empty:
         raise ValueError("Dataset is empty")
-    if frame[TARGET].dropna().isin(["yes", "no", 0, 1]).all() is False:
+    target = frame[TARGET].dropna().astype(str).str.lower()
+    if not target.isin(["yes", "no", "0", "1"]).all():
         raise ValueError("Target must contain yes/no or 0/1 values")
+    if frame[FEATURES].isnull().all(axis=1).any():
+        raise ValueError("Rows with every feature missing are not allowed")

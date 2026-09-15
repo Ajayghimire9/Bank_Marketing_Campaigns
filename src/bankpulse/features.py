@@ -21,7 +21,7 @@ def build_pipeline(model):
     ])
     categorical = Pipeline([
         ("imputer", SimpleImputer(strategy="most_frequent")),
-        ("onehot", OneHotEncoder(handle_unknown="ignore")),
+        ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
     ])
     prep = ColumnTransformer([
         ("numeric", numeric, NUMERIC),

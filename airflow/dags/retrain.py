@@ -1,11 +1,12 @@
-from datetime import datetime
+from datetime import UTC, datetime
+
+from airflow.operators.bash import BashOperator
 
 from airflow import DAG
-from airflow.operators.bash import BashOperator
 
 with DAG(
     "bankpulse_retraining",
-    start_date=datetime(2026, 1, 1),
+    start_date=datetime(2026, 1, 1, tzinfo=UTC),
     schedule="0 3 * * 1",
     catchup=False,
     tags=["mlops", "propensity"],

@@ -18,4 +18,8 @@ def uplift_report(y_true, probabilities, budget_fraction: float = 0.20) -> dict[
     order = np.argsort(-p)
     top_rate = float(y[order[:k]].mean())
     overall = float(y.mean())
-    return {"top_cohort_rate": top_rate, "overall_rate": overall, "lift": top_rate / overall if overall else 0.0}
+    return {
+        "top_cohort_rate": top_rate,
+        "overall_rate": overall,
+        "lift": top_rate / overall if overall else 0.0,
+    }

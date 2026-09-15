@@ -39,3 +39,4 @@ pythonpath = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = ["Portugal-bank_marketing/Bank_Marketing_Campaigns.py", "Portugal-bank_marketing/Bank_Marketing_Campaigns.ipynb"]

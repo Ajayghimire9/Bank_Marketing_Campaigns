@@ -17,14 +17,21 @@ def candidates(random_state: int = 42) -> dict[str, Pipeline]:
         ),
         "random-forest": build_pipeline(
             RandomForestClassifier(
-                n_estimators=300, max_depth=14, min_samples_leaf=3,
-                class_weight="balanced_subsample", n_jobs=-1, random_state=random_state,
+                n_estimators=300,
+                max_depth=14,
+                min_samples_leaf=3,
+                class_weight="balanced_subsample",
+                n_jobs=-1,
+                random_state=random_state,
             )
         ),
         "hist-gradient-boosting": build_pipeline(
             HistGradientBoostingClassifier(
-                max_iter=250, learning_rate=0.06, max_leaf_nodes=31,
-                l2_regularization=1.0, random_state=random_state,
+                max_iter=250,
+                learning_rate=0.06,
+                max_leaf_nodes=31,
+                l2_regularization=1.0,
+                random_state=random_state,
             )
         ),
     }

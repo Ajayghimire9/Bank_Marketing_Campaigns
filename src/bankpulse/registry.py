@@ -25,3 +25,15 @@ def write_manifest(model_path: str | Path, metrics: dict, output: str | Path) ->
 
 def promotion_allowed(metrics: dict, minimum_roc_auc: float = 0.70) -> bool:
     return float(metrics.get("roc_auc", 0.0)) >= minimum_roc_auc
+
+
+def serving_threshold(model_path: str | Path) -> float:
+    """Load the validation-selected threshold and verify artifact integrity."""
+    manifest_path = Path(model_path).with_suffix(".json")
+    payload = json.loads(manifest_path.read_text())
+    if payload["sha256"] != sha256(model_path):
+        raise ValueError("Model artifact checksum does not match manifest")
+    threshold = float(payload["metrics"]["threshold"])
+    if not 0 <= threshold <= 1:
+        raise ValueError("Invalid decision threshold")
+    return threshold

@@ -33,17 +33,18 @@ def train(data_path: str, output_dir: str = "artifacts") -> dict:
             results[name] = metrics
             mlflow.log_metrics({f"{name}_{k}": v for k, v in metrics.items()})
         champion = max(results, key=lambda name: results[name]["roc_auc"])
-        model = candidates()[champion].fit(x_train, y_train)
+        champion_model = candidates()[champion].fit(x_train, y_train)
         out = Path(output_dir)
         out.mkdir(parents=True, exist_ok=True)
         artifact = out / "model.joblib"
-        save(model, artifact)
-        manifest = out / "model.json"
-        write_manifest(artifact, results[champion], manifest)
+        save(champion_model, artifact)
+        metrics = results[champion]
+        write_manifest(artifact, metrics, out / "model.json")
+        (out / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
         mlflow.log_artifact(str(artifact))
         mlflow.log_param("champion", champion)
-        mlflow.log_param("promotion_allowed", promotion_allowed(results[champion]))
-    return {"champion": champion, "metrics": results[champion]}
+        mlflow.log_param("promotion_allowed", promotion_allowed(metrics))
+    return {"champion": champion, "metrics": metrics}
 
 
 def main() -> None:

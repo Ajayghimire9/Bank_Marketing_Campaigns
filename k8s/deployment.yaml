@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankpulse
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bankpulse
+  template:
+    metadata:
+      labels:
+        app: bankpulse
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/ajayghimire9/bankpulse:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: BANKPULSE_MODEL
+              value: /models/model.joblib
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankpulse
+spec:
+  selector:
+    app: bankpulse
+  ports:
+    - port: 80
+      targetPort: 8000

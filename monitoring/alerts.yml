@@ -1,0 +1,17 @@
+groups:
+  - name: bankpulse-serving
+    rules:
+      - alert: BankPulseHighErrorRate
+        expr: rate(bankpulse_prediction_errors_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: BankPulse inference errors are elevated
+      - alert: BankPulseHighLatency
+        expr: histogram_quantile(0.95, rate(bankpulse_prediction_latency_seconds_bucket[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: BankPulse p95 latency exceeds one second

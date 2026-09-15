@@ -1,0 +1,22 @@
+stages:
+  validate:
+    cmd: python -m bankpulse.data_validate --data data/bank.csv
+    deps:
+      - data/bank.csv
+      - src/bankpulse/data.py
+    outs:
+      - artifacts/validated.marker
+  train:
+    cmd: bankpulse-train --data data/bank.csv --output artifacts
+    deps:
+      - data/bank.csv
+      - src/bankpulse
+      - params.yaml
+    params:
+      - data
+      - training
+    outs:
+      - artifacts/model.joblib
+      - artifacts/model.json
+    metrics:
+      - artifacts/metrics.json
